@@ -1,3 +1,5 @@
 .pio
 .vscode
 test
+back_up_Adafruit_NeoPixel
+.gitignore
