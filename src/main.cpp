@@ -5,6 +5,15 @@
 #include <Adafruit_NeoPixel.h>
 #include "trainsettings.h"
 
+/********************************************************************************************************
+ * Version history
+ * 
+ * 10-02-2021   v1.0  Stable version - with external trainsettings
+ * 
+ * 
+ *******************************************************************************************************/
+
+
 // #define INTERRUPTPIN PCINT2 //this is PB1 per the schematic
 // #define PCINT_VECTOR PCINT0_vect  //this step is not necessary
 // #define DATADIRECTIONPIN DDB2 //Page 64 of data sheet
