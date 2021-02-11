@@ -14,4 +14,9 @@ TODO:
  - test on functions F13 - F28 (my handhelds don't support these numbers)
 
 Nice to have
- - possiblity to change decoder address on main or program track
+ - possibility to remotely change decoder address on main or program track
+ - possibility to remotely change light/color of the neopixels
+
+
+
+ #dcc #dcc++ #at85 #neopixel #model-railroad #fluorenscent-light-simulator
