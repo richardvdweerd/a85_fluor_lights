@@ -1,0 +1,34 @@
+// AUTOMATICALLY GENERATED FILE. PLEASE DO NOT MODIFY IT MANUALLY
+
+// PIO Unified Debugger
+//
+// Documentation: https://docs.platformio.org/page/plus/debugging.html
+// Configuration: https://docs.platformio.org/page/projectconf/section_env_debug.html
+
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "platformio-debug",
+            "request": "launch",
+            "name": "PIO Debug",
+            "executable": "d:/OneDrive/Documenten/PlatformIO/Projects/at85_dcc_fluor_lights_neopixel/.pio/build/digispark-at85/firmware.elf",
+            "projectEnvName": "digispark-at85",
+            "toolchainBinDir": "C:/Users/Gebruiker/.platformio/packages/toolchain-atmelavr/bin",
+            "preLaunchTask": {
+                "type": "PlatformIO",
+                "task": "Pre-Debug (digispark-at85)"
+            },
+            "internalConsoleOptions": "openOnSessionStart"
+        },
+        {
+            "type": "platformio-debug",
+            "request": "launch",
+            "name": "PIO Debug (skip Pre-Debug)",
+            "executable": "d:/OneDrive/Documenten/PlatformIO/Projects/at85_dcc_fluor_lights_neopixel/.pio/build/digispark-at85/firmware.elf",
+            "projectEnvName": "digispark-at85",
+            "toolchainBinDir": "C:/Users/Gebruiker/.platformio/packages/toolchain-atmelavr/bin",
+            "internalConsoleOptions": "openOnSessionStart"
+        }
+    ]
+}

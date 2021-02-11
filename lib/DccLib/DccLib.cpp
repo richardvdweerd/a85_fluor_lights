@@ -15,7 +15,7 @@ Dcc_Info  dccInfo;
 
 //#define NUM_REGISTERS 4 is now part of REG_TYPES
 #define DEFAULT_DCC_ADDRESS 42
-#define GOLDEN_NUMBER   0x5
+#define GOLDEN_NUMBER   0x06
 
 Register_Pair registers[NUM_REGISTERS] =
 {

@@ -23,11 +23,8 @@
 
 //#define DEBUG_MAIN
 
-#define PIN_FORWARD PB3
-#define PIN_BACKWARD PB4
-
-// #define USE_NEOPIXEL
-
+#define PIN_FRONT_LIGHT PB3
+#define PIN_REAR_LIGHT  PB4
 
 // const uint16_t maxNumPixels = 9;
 // const uint8_t stepValue = 1;
@@ -40,26 +37,135 @@ const uint8_t  neoPin = PB0;
 #endif
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(numPixels, neoPin, NEO_GRB + NEO_KHZ800);
-//FluorescentLights lights[numPixels - (cab_light ? 1 : 0)]; // use 1 less pixel for flickering lights when there is a cab light
-FluorescentLights lights[numPixels]; // use 1 less pixel for flickering lights when there is a cab light
+FluorescentLights lights[numPixels - (cab_light ? 1 : 0)]; // use 1 less pixel for flickering lights when there is a cab light
+// FluorescentLights lights[numPixels]; // use 1 less pixel for flickering lights when there is a cab light
+
+// remote programming vars
+bool digits[9];
+uint8_t command[] = { 0, 0, 0, 0 };
+uint8_t command_functions[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+uint8_t command_length = 0;
+uint8_t command_count_nine = 0;    // 5 times 9 is reset command buffer
+
+
+void flash_light(uint8_t pinNumber, uint8_t numberOfFlashes = 1)
+{
+  for( uint8_t i = 0; i < numberOfFlashes; i++ )
+  {
+    digitalWrite( pinNumber, HIGH );
+    delay(250);
+    digitalWrite( pinNumber, LOW );
+    // if ( i < ( numberOfFlashes - 1 ) )
+    // {
+      delay(250);
+    // }
+  }
+}
+
+void flash_buffer()
+{
+  
+  for ( uint8_t i = 0; i < sizeof( command ); i++ )
+  {
+    flash_light( PIN_REAR_LIGHT, i+1);
+    flash_light( PIN_FRONT_LIGHT, command[ i ]);
+    delay(500);
+  }
+}
+
+void command_reset()
+{
+  command_length = command_count_nine = 0;
+  for ( uint8_t i = 0; i < sizeof( command ); i++ )
+  {
+    command[ i ] = 0;
+  }
+  for ( uint8_t i = 0; i < sizeof( command_functions ); i++ )
+  {
+    command_functions[ i ] = 0;
+    flash_light( PIN_REAR_LIGHT, 2 );
+  }
+}
+
+void command_shift()
+{
+  for ( uint8_t i = 1; i < sizeof( command ); i++ )
+    command[ i - 1 ] = command[ i ]; 
+}
+
+uint16_t command_value()
+{
+  uint16_t sum = 0;
+  for (uint8_t i = 0; i < sizeof( command ); i++ )
+  {
+    sum = sum * 10 + command[ i ];
+  }
+  return sum;
+}
+
+void command_read_change()
+{
+  for( uint8_t i = 0; i <= (uint8_t) 10; i++)
+  {
+    uint8_t functionState = dccGetFunction( i );
+    if ( functionState != command_functions[ i % 10 ] )
+    {
+      // flash_light(PIN_REAR_LIGHT, i+1);
+      command_shift();
+      command[3] = i % 10;  // function 'i' has changed, add function as number to the command buffer
+      // command_length++;
+      command_functions[ i % 10 ] = functionState;
+      if ( i != 9 )
+        command_count_nine = 0;
+      else
+        {
+          command_count_nine++;
+          // flash_light(PIN_REAR_LIGHT);
+        }
+      
+      if ( command_count_nine == 5)
+      {
+        command_reset();
+        // flash_light(PIN_REAR_LIGHT, 3);
+      }
+      // flash_light(PIN_REAR_LIGHT, command_length);
+      // if ( command_length == 4 )
+      // {
+        
+
+        
+      // }
+    }
+  }
+  // flash_buffer();
+  if ( command_value() == LOK_ADDRESS )
+  {
+    flash_light(PIN_REAR_LIGHT, 2);
+    delay(500);
+    flash_light(PIN_FRONT_LIGHT, 2);
+    delay(500);
+    flash_light(PIN_REAR_LIGHT, 2);
+    delay(500);
+  }
+}
 
 void setup() {
   // pinMode(neoPin, OUTPUT); // is set in strip.begin()
 
-  // pinMode(PIN_FORWARD, OUTPUT);
-  // pinMode(PIN_BACKWARD, OUTPUT);
+  // pinMode(PIN_FRONT_LIGHT, OUTPUT);
+  // pinMode(PIN_REAR_LIGHT, OUTPUT);
   //DDRB |= 0b00011000;
-  DDRB |= ((1 << PIN_FORWARD) | (1 << PIN_BACKWARD)); // set pins for front and back to output
+  DDRB |= (( 1 << PIN_FRONT_LIGHT ) | ( 1 << PIN_REAR_LIGHT )); // set pins for front and back to output
   #ifdef DEBUG_MAIN
     // signalling board is ready
     // pinMode(PB1, OUTPUT);
-    DDRB |= (1 << PB1); // set pin PB1 to output
+    DDRB |= ( 1 << PB1 ); // set pin PB1 to output
     for(int i = 0; i < 5; i++)
     {
-      digitalWrite(PB1, HIGH);
-      delay(100);
-      digitalWrite(PB1, LOW);
-      delay(100);
+      digitalWrite( PB1, HIGH );
+      delay( 100 );
+      digitalWrite( PB1, LOW );
+      delay( 100 );
     }
   #endif
 
@@ -73,7 +179,7 @@ void setup() {
   dccSetDecoder(LOK_ADDRESS, DT_MULTIFUNCTION_DECODER); // set decoder address and type
 
   #ifdef DEBUG_MAIN
-  for (int j = PIN_FORWARD; j <= PIN_BACKWARD; j++)
+  for (int j = PIN_FRONT_LIGHT; j <= PIN_REAR_LIGHT; j++)
   {
     for (int i = 0; i < 4; i++)
     {
@@ -84,6 +190,7 @@ void setup() {
     }
   }
   #endif
+  // flash_light(PIN_REAR_LIGHT, 5);
 }
 
 void loop() {
@@ -97,6 +204,13 @@ void loop() {
 
   /****************************************************************************************************
    * 
+   * handle programming commands
+   * 
+   ****************************************************************************************************/
+  command_read_change();
+
+  /****************************************************************************************************
+   * 
    * handle front and tail lights
    * 
    ****************************************************************************************************/
@@ -106,28 +220,28 @@ void loop() {
     if (dir)
     {
       #ifdef TAIL
-        digitalWrite(PIN_FORWARD, LOW);
-        digitalWrite(PIN_BACKWARD, HIGH);
+        digitalWrite(PIN_FRONT_LIGHT, LOW);
+        digitalWrite(PIN_REAR_LIGHT, HIGH);
       #else
-        digitalWrite(PIN_FORWARD, HIGH); 
-        digitalWrite(PIN_BACKWARD, LOW);
+        digitalWrite(PIN_FRONT_LIGHT, HIGH); 
+        digitalWrite(PIN_REAR_LIGHT, LOW);
       #endif
     }
     else
     {
       #ifdef TAIL
-        digitalWrite(PIN_FORWARD, HIGH); 
-        digitalWrite(PIN_BACKWARD, LOW);
+        digitalWrite(PIN_FRONT_LIGHT, HIGH); 
+        digitalWrite(PIN_REAR_LIGHT, LOW);
       #else
-        digitalWrite(PIN_FORWARD, LOW);
-        digitalWrite(PIN_BACKWARD, HIGH);
+        digitalWrite(PIN_FRONT_LIGHT, LOW);
+        digitalWrite(PIN_REAR_LIGHT, HIGH);
       #endif
     }
   }
   else
   {  // light is off
-    digitalWrite(PIN_FORWARD, LOW);
-    digitalWrite(PIN_BACKWARD, LOW);
+    digitalWrite(PIN_FRONT_LIGHT, LOW);
+    digitalWrite(PIN_REAR_LIGHT, LOW);
   }
 
   /****************************************************************************************************
