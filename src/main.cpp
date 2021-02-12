@@ -197,7 +197,7 @@ void loop() {
   static bool forceOff=true;
   static bool cabinLight = false;
   static bool stripChanged = true;
-  int lightsOn = (int) dccGetFunction(FL_LIGHT_FUNCTION);
+  int lightsOn = (int) dccGetFunction(COACH_LIGHT_FUNCTION);
   uint8_t dir = dccGetDirection();
   uint8_t speed = dccGetSpeed();
   uint8_t f0 = dccGetFunction(0);
@@ -255,7 +255,7 @@ void loop() {
   {  // turn cabin light on!
     if (!cabinLight)
     {  // light was off, turn on
-      strip.setPixelColor(numPixels-1, CAB_RED, CAB_GREEN, CAB_BLUE);
+      strip.setPixelColor(numPixels-1, CAB_RED, CABIN_GREEN, CABIN_BLUE);
       cabinLight = true;
       stripChanged = true;
     }
@@ -283,7 +283,7 @@ void loop() {
       lights[i].switchLight(lightsOn); 
       
       // r, g, b = 22,21,18
-      strip.setPixelColor(i /* *stepValue*/, lights[i]._state * FL_RED, lights[i]._state * FL_GREEN, lights[i]._state * FL_BLUE);
+      strip.setPixelColor(i /* *stepValue*/, lights[i]._state * COACH_RED, lights[i]._state * COACH_GREEN, lights[i]._state * COACH_BLUE);
 
       if (lights[i]._on)
         countOn++;

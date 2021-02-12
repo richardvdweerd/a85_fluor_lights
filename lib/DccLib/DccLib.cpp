@@ -1,4 +1,6 @@
 #include "DccLib.h"
+#include "../../src/trainsettings.h"
+
 
 //#define DCC_DEBUG
 
@@ -15,14 +17,22 @@ Dcc_Info  dccInfo;
 
 //#define NUM_REGISTERS 4 is now part of REG_TYPES
 #define DEFAULT_DCC_ADDRESS 42
-#define GOLDEN_NUMBER   0x06
+#define MAGIC_NUMBER   0x07
 
 Register_Pair registers[NUM_REGISTERS] =
 {
-    {REG_Custom_Key,              GOLDEN_NUMBER}, // some random number, to determine there is a CV written to eeprom
-    {REG_Primary_Address,         DEFAULT_DCC_ADDRESS},
-    {REG_Decoder_Type,            DT_MULTIFUNCTION_DECODER},
-    {REG_CV29,                    1},             // 28 steps
+    { REG_Custom_Key,             MAGIC_NUMBER }, // some random number, to determine there is a CV written to eeprom
+    { REG_Primary_Address,        DEFAULT_DCC_ADDRESS },
+    { REG_Decoder_Type,           DT_MULTIFUNCTION_DECODER },
+    { REG_CV29,                   1 },             // 28 steps
+    { REG_FUNCION_COACH_LIGHT,    COACH_LIGHT_FUNCTION },
+    { REG_CAB_ON_MAX_SPEED,       CABIN_ON_MAX_SPEED },
+    { REG_COACH_RED,              COACH_RED },
+    { REG_COACH_GREEN,            COACH_GREEN },
+    { REG_COACH_BLUE,             COACH_BLUE },
+    { REG_CABIN_RED,              CABIN_BLUE },
+    { REG_CABIN_GREEN,            CABIN_GREEN },
+    { REG_CABIN_BLUE,             CABIN_BLUE },
 };
 
 #ifdef DCC_DEBUG
@@ -66,7 +76,7 @@ void readEeprom()
     Register_Pair tempRegs[NUM_REGISTERS];
     eeprom_read_block(tempRegs, 0, sizeof(tempRegs));
 
-    if (tempRegs[0].regValue == GOLDEN_NUMBER) {
+    if (tempRegs[0].regValue == MAGIC_NUMBER) {
       eeprom_read_block(registers, 0, sizeof(registers));
     }
     else

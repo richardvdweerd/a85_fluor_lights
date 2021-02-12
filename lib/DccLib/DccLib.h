@@ -101,7 +101,15 @@ enum REG_TYPES
     REG_Primary_Address,
     REG_Decoder_Type,
     REG_CV29,
-    NUM_REGISTERS,
+    REG_FUNCION_COACH_LIGHT, 
+    REG_CAB_ON_MAX_SPEED,       
+    REG_COACH_RED,
+    REG_COACH_GREEN,
+    REG_COACH_BLUE,
+    REG_CABIN_RED,
+    REG_CABIN_GREEN,
+    REG_CABIN_BLUE,
+    NUM_REGISTERS,                   // auto count number of registers
 };
 
 struct Register_Pair
