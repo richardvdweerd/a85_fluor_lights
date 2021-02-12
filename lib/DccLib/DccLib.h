@@ -98,9 +98,9 @@
 enum REG_TYPES
 {
     REG_Custom_Key,
-    REG_Primary_Address,
     REG_Decoder_Type,
     REG_CV29,
+    REG_Primary_Address,
     REG_FUNCION_COACH_LIGHT, 
     REG_CAB_ON_MAX_SPEED,       
     REG_COACH_RED,
@@ -111,6 +111,8 @@ enum REG_TYPES
     REG_CABIN_BLUE,
     NUM_REGISTERS,                   // auto count number of registers
 };
+
+#define FIRST_PROGRAMMABLE_REGISTER REG_Primary_Address
 
 struct Register_Pair
 {
@@ -182,4 +184,5 @@ bool dccGetFunction(uint8_t function);
 uint16_t dccGetSpeed();
 bool dccGetDirection();
 void flashBit(uint8_t bit, uint16_t times);
+uint16_t readRegister(REG_TYPES cvNumber);
 #endif

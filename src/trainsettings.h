@@ -8,7 +8,7 @@
  * #define LOK_ADDRESS              3   // defines the dcc lok address
  * #define COACH_LIGHT_FUNCTION     3   // defines the function where the light are connected to
  * #define NUM_PIXELS               9   // defines the total number of pixels, thus including the cabin light
- * #define CABIN_LIGHT                  // defines the last pixel as the cab_light, comment out if there is no cabin light
+ * #define CABIN_LIGHT                  // defines the last pixel as the cabin_light, comment out if there is no cabin light
  * #define CABIN_ON_MAX_SPEED       2   // defines max speed when light in cabine turns on; when 0 light turns on only at stop
  * #define TAIL                         // defines this is the back of the train, reversing front and tail lights, comment out when front
  * #define COACH_RED                22  // RGB-codes for the fluorescent lights 

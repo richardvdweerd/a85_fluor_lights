@@ -62,7 +62,7 @@ void flash_light(uint8_t pinNumber, uint8_t numberOfFlashes = 1)
   }
 }
 
-void flash_buffer()
+void flash_command_buffer()
 {
   
   for ( uint8_t i = 0; i < sizeof( command ); i++ )
@@ -71,6 +71,18 @@ void flash_buffer()
     flash_light( PIN_FRONT_LIGHT, command[ i ]);
     delay(500);
   }
+}
+
+void flash_number(uint16_t number)
+{
+  command[ 0 ] = number / 1000;
+  number -= command[ 0 ] * 1000;
+  command[ 1 ] = number / 100;
+  number -= command[ 1 ] * 100;
+  command[ 2 ] = number / 10;
+  number -= command[ 2 ] * 10;
+  command[ 3 ] = number;
+  flash_command_buffer();
 }
 
 void command_reset()
@@ -137,7 +149,7 @@ void command_read_change()
       // }
     }
   }
-  // flash_buffer();
+  // flash_command_buffer();
   if ( command_value() == LOK_ADDRESS )
   {
     flash_light(PIN_REAR_LIGHT, 2);
@@ -176,7 +188,12 @@ void setup() {
   strip.show();
 
   dccInit(PB2, EDGE_RISING);  // default pin 2 and edge rising
+  // TODO: remove testline
+  flash_number(readRegister(REG_Primary_Address));
   dccSetDecoder(LOK_ADDRESS, DT_MULTIFUNCTION_DECODER); // set decoder address and type
+  // TODO: remove testlines
+  flash_number(readRegister(REG_Primary_Address));
+  flash_number(readRegister(REG_CABIN_BLUE));
 
   #ifdef DEBUG_MAIN
   for (int j = PIN_FRONT_LIGHT; j <= PIN_REAR_LIGHT; j++)
@@ -249,13 +266,13 @@ void loop() {
    * handle cabin light
    * 
    ****************************************************************************************************/
-  #ifdef CAB_LIGHT      // we can skip this entire code if there is not a cabin light
+  #ifdef CABIN_LIGHT      // we can skip this entire code if there is not a cabin light
   // handle cabin light
-  if (f0 && dir && speed <= CAB_ON_MAX_SPEED)
+  if (f0 && dir && speed <= CABIN_ON_MAX_SPEED)
   {  // turn cabin light on!
     if (!cabinLight)
     {  // light was off, turn on
-      strip.setPixelColor(numPixels-1, CAB_RED, CABIN_GREEN, CABIN_BLUE);
+      strip.setPixelColor(numPixels-1, CABIN_RED, CABIN_GREEN, CABIN_BLUE);
       cabinLight = true;
       stripChanged = true;
     }

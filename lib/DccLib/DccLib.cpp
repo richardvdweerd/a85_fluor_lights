@@ -17,7 +17,7 @@ Dcc_Info  dccInfo;
 
 //#define NUM_REGISTERS 4 is now part of REG_TYPES
 #define DEFAULT_DCC_ADDRESS 42
-#define MAGIC_NUMBER   0x07
+#define MAGIC_NUMBER   0x08
 
 Register_Pair registers[NUM_REGISTERS] =
 {
