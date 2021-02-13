@@ -22,9 +22,7 @@ https://easyeda.com/editor#id=8dd5c845272c4ee3b02a5e7bf703b0bd|b3c5f66cd8e042c0a
 
 ---
 
-
-
-## Remote programming
+## Remote programming (see special branch)
 How to use remote programming (only the attiny 85 will be programmed, not the dcc-decoder of your locomotive):
 1. stop the train on which is the attiny to be programmed to make sure there is good contact
     - **NOTE**: if you have multiple coaches on the track with attiny's with the same decoder address, they will all be programmed

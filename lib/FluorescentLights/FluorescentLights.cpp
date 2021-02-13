@@ -88,7 +88,7 @@ void FluorescentLights::switchLight(int status)
         _duration = millis() + random(1000,2000);
       #else
           _delay  = millis() + getRandom(250) + 50;
-          _duration = millis() + getRandom(2000) + 1000;
+          _duration = millis() + getRandom(3000) + 1000;
       #endif
       #ifdef ESP8266
         Serial.printf("%u %d %u: new on\n", millis(), _pin, _delay);

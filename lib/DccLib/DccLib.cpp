@@ -21,12 +21,12 @@ Dcc_Info  dccInfo;
 
 Register_Pair registers[NUM_REGISTERS] =
 {
-    { REG_Custom_Key,             MAGIC_NUMBER }, // some random number, to determine there is a CV written to eeprom
+    { REG_Custom_Key,             MAGIC_NUMBER },          // some random number, to determine there is a CV written to eeprom
     { REG_Primary_Address,        DEFAULT_DCC_ADDRESS },
     { REG_Decoder_Type,           DT_MULTIFUNCTION_DECODER },
-    { REG_CV29,                   1 },             // 28 steps
+    { REG_CV29,                   1 },                    // 28 steps
     { REG_FUNCION_COACH_LIGHT,    COACH_LIGHT_FUNCTION },
-    { REG_CAB_ON_MAX_SPEED,       CABIN_ON_MAX_SPEED },
+    { REG_CABIN_ON_MAX_SPEED,     CABIN_ON_MAX_SPEED },
     { REG_COACH_RED,              COACH_RED },
     { REG_COACH_GREEN,            COACH_GREEN },
     { REG_COACH_BLUE,             COACH_BLUE },

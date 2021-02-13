@@ -97,12 +97,12 @@
 // custom registers
 enum REG_TYPES
 {
-    REG_Custom_Key,
+    REG_Custom_Key,                 // Magic number
     REG_Decoder_Type,
     REG_CV29,
     REG_Primary_Address,
     REG_FUNCION_COACH_LIGHT, 
-    REG_CAB_ON_MAX_SPEED,       
+    REG_CABIN_ON_MAX_SPEED,       
     REG_COACH_RED,
     REG_COACH_GREEN,
     REG_COACH_BLUE,
