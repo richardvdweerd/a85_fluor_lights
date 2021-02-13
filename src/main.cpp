@@ -94,9 +94,17 @@ void flash_number(uint16_t number)
   flash_command_buffer();
 }
 
+void command_append(uint8_t numberToInsert = 0)
+{
+  uint8_t lastIndex = sizeof( command ) - 1;
+  for ( uint8_t i = 0; i < lastIndex; i++ )
+    command[ i ] = command[ i + 1 ];
+  command[ lastIndex ] = numberToInsert;
+}
+
 void command_reset()
 {
-  // programming_mode = false;
+  programming_mode = false;
   command_length = command_count_nine = 0;
   for ( uint8_t i = 0; i < sizeof( command ); i++ )
   {
@@ -106,19 +114,12 @@ void command_reset()
   {
     command_functions[ i ] = 0;
   }
+  command_append();
   // strip.setPixelColor(PIXEL_PROGRAMMING, 0);
   // strip.show();
   // for ( int i = 0; i < NUM_PIXELS - (cab_light ? 1 : 0 ); i++)
   //   lights[ i ]._state = 0;
   // stripChanged = true;
-}
-
-void command_append(uint8_t numberToInsert = 0)
-{
-  uint8_t lastIndex = sizeof( command ) - 1;
-  for ( uint8_t i = 0; i < lastIndex; i++ )
-    command[ i ] = command[ i + 1 ];
-  command[ lastIndex ] = numberToInsert;
 }
 
 uint16_t command_value()
@@ -147,7 +148,6 @@ void flash_pixel(uint16_t pixelNumber, uint32_t color, uint16_t numberFlashes = 
 
 void command_read_change()
 {
-  return;
   static unsigned long last_time_function_key = 0UL;
 
   for( uint8_t i = 0; i <= (uint8_t) 10; i++)
@@ -161,13 +161,14 @@ void command_read_change()
       // command[3] = i % 10;  // function 'i' has changed, add function as number to the command buffer
       command_functions[ i ] = functionState; // keep track of current state of function
       last_time_function_key = millis();    
-      // if ( command_value() == LOK_ADDRESS )
-      // {
-      //   programming_mode = true;
-      //   strip.clear();
-      //   strip.setPixelColor(PIXEL_PROGRAMMING, 0x0000FF);
-      //   strip.show();
-      // }
+      if ( command_value() == LOK_ADDRESS )
+      {
+        flash_light(PIN_FRONT_LIGHT, 1);
+        programming_mode = true;
+        // strip.clear();
+        // strip.setPixelColor(PIXEL_PROGRAMMING, 0x0000FF);
+        // stripChanged = true;
+      }
 
       // 5 times a pressed 9 is reset
       if ( i != 9 )  
@@ -183,15 +184,15 @@ void command_read_change()
       if ( command_count_nine == 5)
       {
         command_reset();
-        // flash_light(PIN_REAR_LIGHT, 3);
+        flash_light(PIN_REAR_LIGHT, 3);
       }
-      // flash_light(PIN_REAR_LIGHT, command_length);
-      // if ( command_length == 4 )
-      // {
+    //   // flash_light(PIN_REAR_LIGHT, command_length);
+    //   // if ( command_length == 4 )
+    //   // {
         
 
         
-      // }
+    //   // }
     }
   }
 
@@ -263,7 +264,7 @@ void loop() {
    * read changes in function status
    * 
    ****************************************************************************************************/
-  // command_read_change();
+  command_read_change();
 
   if (!programming_mode)
   {
