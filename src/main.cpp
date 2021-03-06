@@ -2,8 +2,18 @@
 #include <Arduino.h>
 #include "DccLib.h"
 #include "FluorescentLights.h"
-#include <Adafruit_NeoPixel.h>
+#if defined( MEGATINYCORE_SERIES )
+  // #include <tinyNeoPixel.h>
+  #error "activate include"
+#endif
+#if defined( __AVR_ATtiny85__ )
+  #include <Adafruit_NeoPixel.h>
+#endif
+
 #include "trainsettings.h"
+
+
+#define __VERSION_FLUOR_LIGHTS__ "01.02"
 
 /********************************************************************************************************
  * Version history
@@ -12,17 +22,40 @@
  * 14 feb 2021   v1.1  Stable version
  *                              added function for cabin lights on / off
  *                              added support for cabin front and tail cabin (for eg railbus with only one unit)
- *                     
+ * 06 mar 2021   v1.2  Major adaption for ATtiny1616 - Reworked the dcclib                   
  * 
  *******************************************************************************************************/
 
 //#define DEBUG_MAIN
+#if defined( __AVR_ATtiny85__ )
+  #define PIN_HEAD_LIGHT  PB3
+  #define PIN_TAIL_LIGHT  PB4
+  #define PIN_DCC_SIGNAL  PB2
+  #define PIN_NEOPIXELS   PB0
+  #define ISC_INTERRUPT   EDGE_RISING
 
-#define PIN_FORWARD PB3
-#define PIN_BACKWARD PB4
+#elif defined( __AVR_ATtiny1616__ )
+
+  // for pinout diagram see folder 'ATtiny1616 datasheet'
+  // or  https://github.com/SpenceKonde/megaTinyCore/issues/24
+  //
+  //
+  // how to setup/program the T1616
+  // https://www.electronics-lab.com/project/using-new-attiny-processors-arduino-ide-attiny412-attiny1614-attiny3216-attiny1616-attiny3217/
+
+
+  #define PIN_HEAD_LIGHT  PIN_PA5
+  #define PIN_TAIL_LIGHT  PIN_PA6
+  #define PIN_DCC_SIGNAL  PIN_PA2
+  #define PIN_NEOPIXELS   PIN_PA4
+  #define ISC_INTERRUPT   EDGE_RISING
+  
+  #warning "Chip is 1616 - definition is not completed yet"
+#else
+  #error "Chip is not defined correctly"
+#endif
 
 const uint16_t numPixels = NUM_PIXELS; 
-const uint8_t  neoPin = PB0;
 
 #if defined(CABIN_LIGHT_FRONT)
   #define CABIN_LIGHTS
@@ -46,54 +79,44 @@ uint8_t numCabinLights = cabinLightFront + cabinLightTail;
   const uint8_t tailActive = 0;
 #endif
 
+// IMPORTANT: To reduce NeoPixel burnout risk, add 1000 uF capacitor across
+// pixel power leads, add 300 - 500 Ohm resistor on first pixel's data input
+// and minimize distance between Arduino and first pixel.  Avoid connecting
+// on a live circuit...if you must, connect GND first.
 
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(numPixels, neoPin, NEO_GRB + NEO_KHZ800);
+// pinMode is set in strip.begin()
+#if defined( __AVR_ATtiny85__ )
+  Adafruit_NeoPixel strip = Adafruit_NeoPixel(numPixels, (uint8_t) PIN_NEOPIXELS, NEO_GRB + NEO_KHZ800);
+#elif defined( __AVR_ATtiny1616__ )
+  tinyNeoPixel strip = tinyNeoPixel(numPixels, (uint8_t) PIN_NEOPIXELS, NEO_GRB + NEO_KHZ800);
+#endif
 // FluorescentLights lights[numPixels - numCabinLights]; // use less pixels for flickering lights when there are cab lights
 FluorescentLights lights[numPixels]; 
 
+/****************************************************************************************************
+ * 
+ * setup()
+ * 
+ ****************************************************************************************************/
 void setup() {
-  // pinMode(neoPin, OUTPUT); // is set in strip.begin()
-
-  // pinMode(PIN_FORWARD, OUTPUT);
-  // pinMode(PIN_BACKWARD, OUTPUT);
-  //DDRB |= 0b00011000;
-  DDRB |= ((1 << PIN_FORWARD) | (1 << PIN_BACKWARD)); // set pins for front and back to output
-  #ifdef DEBUG_MAIN
-    // signalling board is ready
-    // pinMode(PB1, OUTPUT);
-    DDRB |= (1 << PB1); // set pin PB1 to output
-    for(int i = 0; i < 5; i++)
-    {
-      digitalWrite(PB1, HIGH);
-      delay(100);
-      digitalWrite(PB1, LOW);
-      delay(100);
-    }
+  #if defined( __AVR_ATtinyxy16)
+    //mcu_init(); // set all pins to low_power input
   #endif
+  
+  // setup the pins for head and tail lights, pin for ledstrip is set in strip.begin()
+  pinMode(PIN_HEAD_LIGHT, OUTPUT);
+  pinMode(PIN_TAIL_LIGHT, OUTPUT);
 
-  // setup lights
+  // setup neopixels 
   strip.begin();
-  // for (uint16_t i = 0; i < numPixels; i++)    // set up all pixels, including the cabin lights, if there's one
-  //   strip.setPixelColor(i, 0,0,0);
   strip.clear();  // clear all pixels, including cab lights, if there are any
   strip.show();
 
-  dccInit(PB2, EDGE_RISING);  // default pin 2 and edge rising
+  // setup dcc
+  dccInit(PIN_DCC_SIGNAL, ISC_INTERRUPT);  // default pin 2 and edge rising
   dccSetDecoder(LOK_ADDRESS, DT_MULTIFUNCTION_DECODER); // set decoder address and type
 
-  #ifdef DEBUG_MAIN
-  for (int j = PIN_FORWARD; j <= PIN_BACKWARD; j++)
-  {
-    for (int i = 0; i < 4; i++)
-    {
-      digitalWrite(j, HIGH);
-      delay(500);
-      digitalWrite(j, LOW);
-      delay(500);
-    }
-  }
-  #endif
-
+  // swap front and back when it's the tail
   if ( tailActive)
   {
     uint8_t temp = cabinLightFront;
@@ -102,69 +125,75 @@ void setup() {
   }
 }
 
+/****************************************************************************************************
+ * 
+ * loop()
+ * 
+ ****************************************************************************************************/
 void loop() {
-  static bool forceOff=true;
-  static uint8_t oldCabinLightOn = 0;
-  static bool stripChanged = true;
-  static uint8_t oldDir = 0;
-  uint8_t coachLightsOn = (uint8_t) dccGetFunction(FUNCTION_COACH_LIGHT);
-  uint8_t cabinLightsOn = dccGetFunction(FUNCTION_CABIN_LIGHT);
-  uint8_t dir = dccGetDirection();
-  uint8_t speed = dccGetSpeed();
-  uint8_t f0 = dccGetFunction(0);
+  static bool     forceOff        = true;
+  static uint8_t  oldCabinLightOn = 0;
+  static bool     stripChanged    = true;
+  static uint8_t  oldDir          = 0;
+  uint8_t         coachLightsOn   = (uint8_t) dccGetFunction(FUNCTION_COACH_LIGHT);
+  uint8_t         cabinLightsOn   = dccGetFunction(FUNCTION_CABIN_LIGHT);
+  uint8_t         dir             = dccGetDirection();
+  uint8_t         speed           = dccGetSpeed();
+  uint8_t         f0              = dccGetFunction(0);
 
   /****************************************************************************************************
    * 
    * handle front and tail lights
    * 
    ****************************************************************************************************/
-  if (f0) 
+  if ( f0 ) 
   { 
-    digitalWrite(PIN_FORWARD, LOW ^ dir ^ tailActive); 
-    digitalWrite(PIN_BACKWARD, HIGH ^ dir ^tailActive);
+    // light is on. switch on head or tail light, depending on direction
+    digitalWrite(PIN_HEAD_LIGHT, LOW ^ dir ^ tailActive); 
+    digitalWrite(PIN_TAIL_LIGHT, HIGH ^ dir ^tailActive);
   }
   else
-  {  // light is off
-    digitalWrite(PIN_FORWARD, LOW);
-    digitalWrite(PIN_BACKWARD, LOW);
+  {  // light is off. switch of head and tail light
+    digitalWrite(PIN_HEAD_LIGHT, LOW);
+    digitalWrite(PIN_TAIL_LIGHT, LOW);
   }
 
   /****************************************************************************************************
    * 
-   * handle cabin light
+   * handle cabin lights
    * 
    ****************************************************************************************************/
-  #ifdef CABIN_LIGHTS      // we can skip this entire code if there is not a cabin light
-  // handle cabin light
-  if (cabinLightsOn && /*dir &&*/ speed <= CABIN_ON_MAX_SPEED)
-  {  // turn cabin light on!
-    if ( !oldCabinLightOn || dir != oldDir)
-    {  // light was off, or direction was changed turn on
-      if ( !( dir ^ tailActive ) )
-      {
-        if ( cabinLightFront ) strip.setPixelColor(             0, CABIN_RED, CABIN_GREEN, CABIN_BLUE );
-        if ( cabinLightTail  ) strip.setPixelColor( numPixels - 1, 0, 0, 0 );
+  #ifdef CABIN_LIGHTS      // we can skip this entire code if there is no cabin light
+    // handle cabin light
+    if ( cabinLightsOn && /*dir &&*/ speed <= CABIN_ON_MAX_SPEED )
+    {  // turn cabin light on!
+      if ( !oldCabinLightOn || dir != oldDir )
+      {  // light was off, or direction was changed turn on
+        if ( !( dir ^ tailActive ) )
+        {
+          if ( cabinLightFront ) strip.setPixelColor(             0, CABIN_RED, CABIN_GREEN, CABIN_BLUE );
+          if ( cabinLightTail  ) strip.setPixelColor( numPixels - 1, 0, 0, 0 );
+        }
+        else
+        {
+          if ( cabinLightTail  ) strip.setPixelColor( numPixels - 1, CABIN_RED, CABIN_GREEN, CABIN_BLUE );
+          if ( cabinLightFront ) strip.setPixelColor(             0, 0, 0, 0 );
+        }
+        oldCabinLightOn = true;
+        oldDir = dir;
+        stripChanged = true;
       }
-      else
+    }
+    else
+    { // turn cabin light off
+      if ( oldCabinLightOn )
       {
-        if ( cabinLightTail  ) strip.setPixelColor( numPixels - 1, CABIN_RED, CABIN_GREEN, CABIN_BLUE );
-        if ( cabinLightFront ) strip.setPixelColor(             0, 0, 0, 0 );
+        if ( cabinLightFront ) strip.setPixelColor(             0, 0, 0, 0 ); // turn tail cabin front off
+        if ( cabinLightTail  ) strip.setPixelColor( numPixels - 1, 0, 0, 0 ); // turn tail cabin front off
+        oldCabinLightOn = false;
+        stripChanged = true;
       }
-      oldCabinLightOn = true;
-      oldDir = dir;
-      stripChanged = true;
     }
-  }
-  else
-  { // turn cabin light off
-    if (oldCabinLightOn)
-    {
-      if ( cabinLightFront ) strip.setPixelColor(             0, 0, 0, 0 ); // turn tail cabin front off
-      if ( cabinLightTail  ) strip.setPixelColor( numPixels - 1, 0, 0, 0 ); // turn tail cabin front off
-      oldCabinLightOn = false;
-      stripChanged = true;
-    }
-  }
   #endif // CAB_LIGHT
 
   /****************************************************************************************************
@@ -173,24 +202,26 @@ void loop() {
    * 
    ****************************************************************************************************/
   uint16_t countOn = 0;
-  // loop through all pixels except cabin light
-  for (uint16_t i = cabinLightFront; i < numPixels - cabinLightTail; i++)
-  {
-      lights[i].switchLight(coachLightsOn); 
-      
-      // r, g, b = 22,21,18
-      strip.setPixelColor(i /* *stepValue*/, lights[i]._state * COACH_RED, lights[i]._state * COACH_GREEN, lights[i]._state * COACH_BLUE);
 
-      if (lights[i]._on)
+  // loop through all pixels except cabin light
+  for ( uint16_t i = cabinLightFront; i < numPixels - cabinLightTail; i++ )
+  {
+      lights[i].switchLight( coachLightsOn ); 
+      
+      strip.setPixelColor( i , lights[i]._state * COACH_RED, lights[i]._state * COACH_GREEN, lights[i]._state * COACH_BLUE );
+
+      if ( lights[i]._on )
         countOn++;
   }
-  if (coachLightsOn && !forceOff)
+
+  if ( coachLightsOn && !forceOff )
   {
     stripChanged = true;
-    if (countOn ==  numPixels - numCabinLights) // minus the cabine lights, if there are any
+    if ( countOn ==  numPixels - numCabinLights ) // minus the cabine lights, if there are any
       forceOff = true;
   }
-  if ((!coachLightsOn && forceOff))
+
+  if ( (!coachLightsOn && forceOff) )
   {
     stripChanged = true;
     forceOff = false;
@@ -199,7 +230,7 @@ void loop() {
   // handle changes to the strip
   if (stripChanged)
   {
-    strip.show();
+    strip.show( );
     stripChanged = false;
   }
 }

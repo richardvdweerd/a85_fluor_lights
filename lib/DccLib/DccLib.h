@@ -6,6 +6,7 @@
 #include <avr/interrupt.h>
 #include <avr/eeprom.h>
 // #include "WELL512a.h"
+// #include "../../include/ATtinyxxx6VQFN.h"
 
 
 #define DCC_MAX_MSG_LEN 6
@@ -145,7 +146,7 @@ struct Dcc_State {
     DCC_STATES  state    = WAIT_PREAMBLE;
     DCC_EDGES   edge     = EDGE_RISING;
     int         bitCount = 0;
-    int         pin      = PINB2;       // default PINB2
+    int         pin      = 2;       // default PINB2, for attiny1616 this is the physical pin number
     bool        ready    = false;
     unsigned long timer;
     unsigned long oldTimer;

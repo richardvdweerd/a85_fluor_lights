@@ -1,4 +1,6 @@
 
+**!! WORK IN PROGRESS !!**
+
 # DCC Fluorencent Lights for model trains
 
 Fluorencent lights simulator 
@@ -24,9 +26,9 @@ https://easyeda.com/editor#id=8dd5c845272c4ee3b02a5e7bf703b0bd|b3c5f66cd8e042c0a
  - possibility to remotely change function numbers for coach and cabin lighting
  - possibitity to remotely change the max speed for cabin light to light
 
-And attempt to implement above was started in another branch 'remote-programming'.
-After implementing the code for entering the programming mode, the attempt was shut down because of memory lack on the attiny85. I wil try it again when the new micro processor (attiny167) has arrived. This processor had twice the (flash) memory.
+An attempt to implement above was started in another branch 'remote-programming'.
+After implementing the code for entering the programming mode, the attempt was shut down because of memory lack on the attiny85. I wil try it again when the new micro processor (ATtiny1616) has arrived. This processor had twice the (flash) memory.
      
 ---
 
- #dcc #dcc++ #at85 #at167 #neopixel #model-railroad #fluorenscent-light-simulator
+ #dcc #dcc++ #at85 #at1616 #neopixel #model-railroad #fluorenscent-light-simulator #megaTinyCore

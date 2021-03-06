@@ -33,8 +33,8 @@
     #define NUM_PIXELS              9   // defines the total number of pixels, thus including the cabin light
     #define FUNCTION_COACH_LIGHT    3   // defines the function where the light are connected to
     #define FUNCTION_CABIN_LIGHT    4   // defines the function number for controlling the cabin lights
-    // #define CABIN_LIGHT_FRONT           // defines the last pixel to be a cabin light, comment out to use this pixel as coach light
-    #define CABIN_LIGHT_TAIL            // defines the first pixel to be a cabin light, comment out to use this pixel as coach light
+    #define CABIN_LIGHT_FRONT           // defines the last pixel to be a cabin light, comment out to use this pixel as coach light
+    //#define CABIN_LIGHT_TAIL            // defines the first pixel to be a cabin light, comment out to use this pixel as coach light
     #define CABIN_ON_MAX_SPEED      2   // max speed when light in cabine turns on; when 0 light turns on only at stop
     // #define TAIL                        // reverses front and tail lights, as well as the front and tail cabin lights
     #define COACH_RED               11  //22  // RGB-codes for the fluorescent lights 
